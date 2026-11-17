@@ -50,17 +50,41 @@ const headers = { apikey: SUPABASE_KEY, "Content-Type": "application/json" };
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 const show = html => { app.innerHTML = html; };
 
-async function load() {
+let password = null;
+const rpc = (fn, body) => fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, { method: "POST", headers, body: JSON.stringify(body) })
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+
+async function load(pw) {
   if (!/^[a-z0-9-]{2,60}$/.test(slug)) return show('<p class="state">Lomaketta ei löytynyt.</p>');
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/forms?slug=eq.${slug}&select=id,title,description,questions,thank_you`, { headers });
-    if (!r.ok) throw new Error(r.status);
-    const rows = await r.json();
-    if (!rows.length) return show('<p class="state">Lomaketta ei löytynyt tai se on suljettu.</p>');
-    render(rows[0]);
+    const form = await rpc("get_form", { p_slug: slug, p_password: pw ?? null });
+    if (!form) return show('<p class="state">Lomaketta ei löytynyt tai se on suljettu.</p>');
+    if (form.locked) return renderLock(form);
+    password = pw ?? null;
+    render(form);
   } catch (e) {
     show('<p class="state">Lomakkeen lataus epäonnistui. Yritä hetken kuluttua uudelleen.</p>');
   }
+}
+
+function renderLock(form) {
+  document.title = form.title;
+  show(`
+    <h1>${esc(form.title)}</h1>
+    <p class="desc">Tämä kysely on suojattu salasanalla.</p>
+    <form id="lock" class="q" novalidate>
+      <label class="title" for="pw">Salasana</label>
+      <input type="text" id="pw" autocomplete="off" autocapitalize="off" spellcheck="false">
+      ${form.wrong ? '<div class="error">Väärä salasana. Yritä uudelleen.</div>' : ""}
+      <button type="submit">Jatka</button>
+    </form>`);
+  const pw = document.getElementById("pw"); pw.focus();
+  document.getElementById("lock").onsubmit = e => {
+    e.preventDefault();
+    if (!pw.value.trim()) return;
+    const b = e.target.querySelector("button"); b.disabled = true; b.textContent = "Tarkistetaan…";
+    load(pw.value);
+  };
 }
 
 function field(q) {
@@ -123,12 +147,9 @@ function render(form) {
     const btn = f.querySelector("button"), err = document.getElementById("submitErr");
     btn.disabled = true; btn.textContent = "Lähetetään…"; err.hidden = true;
     try {
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/responses`, {
-        method: "POST",
-        headers: { ...headers, Prefer: "return=minimal" },
-        body: JSON.stringify({ form_id: form.id, answers })
-      });
-      if (!r.ok) throw new Error(r.status);
+      const result = await rpc("submit_response", { p_slug: slug, p_password: password, p_answers: answers });
+      if (result === "wrong_password") return load(null);
+      if (result !== "ok") throw new Error(result);
       show(`<div class="done state"><h1 style="color:var(--ink)">${esc(form.thank_you || "Kiitos vastauksestasi!")}</h1><p>Vastauksesi on tallennettu.</p></div>`);
       scrollTo(0, 0);
     } catch (e) {
