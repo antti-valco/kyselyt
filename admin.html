@@ -57,11 +57,29 @@
   td.when { white-space: nowrap; color: var(--fg-3); font-variant-numeric: tabular-nums; }
   .empty { text-align: center; display: flex; flex-direction: column; gap: 8px; align-items: center; padding: 48px 24px; }
   .errline { color: var(--err); font-size: 14px; }
+  .nav { display: inline-flex; gap: 2px; padding: 4px; border-radius: var(--radius-pill); background: var(--btn-secondary-bg); border: 1px solid var(--btn-secondary-border); margin-left: 8px; }
+  .nav a { font: 500 14px/1 var(--font-sans); padding: 9px 14px; border-radius: var(--radius-pill); color: var(--fg-2); text-decoration: none; white-space: nowrap; }
+  .nav a:hover { color: var(--fg-1); }
+  .nav a.is-on { background: var(--fg-1); color: #171717; }
+  .narrow { max-width: 560px; }
+  .ulist { display: flex; flex-direction: column; }
+  .urow { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-top: 1px solid var(--line); }
+  .urow:first-child { border-top: 0; padding-top: 0; }
+  .urow .avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--grad-kuolemantahti); font-weight: 500; flex: none; text-transform: uppercase; }
+  .urow .info { flex: 1; min-width: 0; }
+  .urow .info b { font-weight: 500; display: block; overflow: hidden; text-overflow: ellipsis; }
+  .urow .info span { color: var(--fg-3); font-size: 13px; }
+  .creds { font: 400 14px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; background: rgba(0,0,0,0.25); border-radius: var(--radius-md); padding: 12px 14px; white-space: pre-wrap; word-break: break-all; }
+  .pwrow { display: flex; gap: 8px; }
+  .pwrow .v-input { flex: 1; }
+  .ok-banner { background: var(--ok-bg); color: var(--ok); }
+  @media (max-width: 800px) { .nav { order: 3; width: 100%; margin: 8px 0 0; justify-content: space-between; } .nav a { flex: 1; text-align: center; } .bar-in { flex-wrap: wrap; } }
   @media (max-width: 800px) {
     .stats { grid-template-columns: 1fr; }
     .formcard { grid-template-columns: 1fr auto; }
     .formcard .acts { grid-column: 1 / -1; justify-content: flex-start; max-width: none; }
-    .grid2, .grid4 { grid-template-columns: 1fr 1fr; }
+    .grid2 { grid-template-columns: 1fr; }
+    .grid4 { grid-template-columns: 1fr 1fr; }
     .q .qtop { grid-template-columns: 1fr; }
     .who { display: none; }
   }
@@ -71,6 +89,11 @@
 <header class="bar" id="hdr" hidden>
   <div class="bar-in">
     <a class="home" href="#/"><span class="v-logo">valco</span><span class="sep"></span><span class="v-eyebrow">Kyselyt</span></a>
+    <nav class="nav" id="nav">
+      <a href="#/" data-nav="">Lomakkeet</a>
+      <a href="#/users" data-nav="users">Käyttäjät</a>
+      <a href="#/account" data-nav="account">Oma tili</a>
+    </nav>
     <span class="spacer"></span>
     <span class="who" id="who"></span>
     <button class="v-btn v-btn-ghost v-btn-sm" id="logout">Kirjaudu ulos</button>
@@ -139,8 +162,12 @@ async function route() {
   if (!(await requireAdmin())) return;
   const [, page, id] = (location.hash || "#/").slice(1).split("/");
   scrollTo(0, 0);
+  const section = page === "users" || page === "account" ? page : "";
+  document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("is-on", a.dataset.nav === section));
   if (page === "edit") return editView(id);
   if (page === "responses") return responsesView(id);
+  if (page === "users") return usersView();
+  if (page === "account") return accountView();
   return listView();
 }
 window.addEventListener("hashchange", route);
@@ -432,6 +459,143 @@ async function responsesView(id) {
     if (error) return toast("Poisto epäonnistui");
     toast("Vastaus poistettu"); responsesView(id);
   });
+}
+
+// ---------- Käyttäjät ----------
+async function adminApi(body) {
+  const { data, error } = await sb.functions.invoke("admin-users", { body });
+  if (error) {
+    let code = error.message;
+    try { const j = await error.context.json(); code = j.error || code; } catch {}
+    throw new Error(code);
+  }
+  return data;
+}
+const API_ERRORS = {
+  exists: "Tällä sähköpostilla on jo tunnus.",
+  invalid_email: "Tarkista sähköpostiosoite.",
+  weak_password: "Salasanassa pitää olla vähintään 8 merkkiä.",
+  self: "Omaa tunnusta ei voi poistaa täältä.",
+  forbidden: "Sinulla ei ole oikeutta hallita käyttäjiä.",
+  not_authenticated: "Kirjautuminen on vanhentunut. Kirjaudu uudelleen.",
+};
+const apiMsg = e => API_ERRORS[e.message] || "Jokin meni pieleen: " + e.message;
+function genPassword() {
+  const chars = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const a = new Uint32Array(12); crypto.getRandomValues(a);
+  return [...a].map(n => chars[n % chars.length]).join("");
+}
+
+async function usersView() {
+  loading();
+  let users;
+  try { users = (await adminApi({ action: "list" })).users; }
+  catch (e) { app.innerHTML = `<div class="v-banner" role="alert">${esc(apiMsg(e))}</div>`; return; }
+  app.innerHTML = `
+    <div class="head v-rise">
+      <div class="t">
+        <span class="v-eyebrow v-eyebrow-dot">Miehistö</span>
+        <h1 class="v-two-tone">Käyttäjät <span>komentosillalla.</span></h1>
+      </div>
+    </div>
+    <div class="grid2" style="align-items:start">
+      <div class="v-card">
+        <h3 style="margin-bottom:14px">${users.length} ${users.length === 1 ? "käyttäjä" : "käyttäjää"}</h3>
+        <div class="ulist">${users.map(u => `
+          <div class="urow">
+            <span class="avatar" aria-hidden="true">${esc((u.email || "?")[0])}</span>
+            <div class="info">
+              <b>${esc(u.email)}</b>
+              <span>${u.last_sign_in_at ? "Viimeksi paikalla " + fmtDate(u.last_sign_in_at) : "Ei ole vielä kirjautunut"}</span>
+            </div>
+            ${u.me ? '<span class="v-tag">Sinä</span>' : `<button class="v-btn v-btn-danger v-btn-sm" data-del="${esc(u.id)}" data-email="${esc(u.email)}">Poista</button>`}
+          </div>`).join("")}
+        </div>
+      </div>
+      <form class="v-card sect" id="uf" novalidate>
+        <h3>Lisää käyttäjä</h3>
+        <p style="font-size:14px">Uusi käyttäjä saa samat oikeudet kuin sinä: lomakkeet, vastaukset ja käyttäjät.</p>
+        <div class="v-field"><label for="nemail">Sähköposti</label><input class="v-input" type="email" id="nemail" autocomplete="off" placeholder="nimi@valco.fi"></div>
+        <div class="v-field"><label for="npw">Väliaikainen salasana</label>
+          <div class="pwrow"><input class="v-input" type="text" id="npw" autocomplete="off" spellcheck="false" value="${genPassword()}"><button type="button" class="v-btn v-btn-secondary" id="regen" title="Luo uusi salasana">Uusi</button></div>
+          <small>Vähintään 8 merkkiä. Käyttäjä voi vaihtaa sen kohdasta Oma tili.</small>
+        </div>
+        <div class="errline" id="uerr" role="alert"></div>
+        <button class="v-btn" type="submit">Lisää käyttäjä</button>
+        <div id="created"></div>
+      </form>
+    </div>`;
+
+  document.getElementById("regen").onclick = () => { document.getElementById("npw").value = genPassword(); };
+  document.getElementById("uf").onsubmit = async e => {
+    e.preventDefault();
+    const email = document.getElementById("nemail").value.trim(), password = document.getElementById("npw").value;
+    const err = document.getElementById("uerr"); err.textContent = "";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.textContent = API_ERRORS.invalid_email; return; }
+    if (password.length < 8) { err.textContent = API_ERRORS.weak_password; return; }
+    const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Lisätään…";
+    try {
+      await adminApi({ action: "create", email, password });
+      const creds = `Kyselyjen hallinta: ${location.href.split("#")[0]}\nSähköposti: ${email}\nSalasana: ${password}`;
+      await usersView();
+      toast("Käyttäjä lisätty");
+      document.getElementById("created").innerHTML = `
+        <div class="v-banner ok-banner" style="flex-direction:column;gap:10px;margin-top:4px">
+          <b>Tunnus luotu. Lähetä nämä tiedot uudelle käyttäjälle:</b>
+          <div class="creds" id="credtxt">${esc(creds)}</div>
+          <button type="button" class="v-btn v-btn-sm" id="copycreds" style="align-self:flex-start">Kopioi tiedot</button>
+        </div>`;
+      document.getElementById("copycreds").onclick = () => copy(creds, "Tiedot kopioitu");
+    } catch (ex) {
+      err.textContent = apiMsg(ex);
+      btn.disabled = false; btn.textContent = "Lisää käyttäjä";
+    }
+  };
+  app.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    if (!confirm(`Poistetaanko käyttäjä ${b.dataset.email}? Hän ei pääse enää kirjautumaan. Lomakkeet ja vastaukset säilyvät.`)) return;
+    b.disabled = true;
+    try { await adminApi({ action: "delete", id: b.dataset.del }); toast("Käyttäjä poistettu"); usersView(); }
+    catch (ex) { b.disabled = false; toast(apiMsg(ex)); }
+  });
+}
+
+// ---------- Oma tili ----------
+async function accountView() {
+  const { data: { session } } = await sb.auth.getSession();
+  app.innerHTML = `
+    <div class="head v-rise">
+      <div class="t">
+        <span class="v-eyebrow v-eyebrow-dot">Oma tili</span>
+        <h1 class="v-two-tone">${esc(session.user.email)}</h1>
+      </div>
+    </div>
+    <form class="v-card sect narrow" id="pf" novalidate>
+      <h3>Vaihda salasana</h3>
+      <p style="font-size:14px">Vähintään 8 merkkiä. Pidempi on parempi, ja "salasana123" on jo varattu.</p>
+      <div class="v-field"><label for="p1">Uusi salasana</label><input class="v-input" type="password" id="p1" autocomplete="new-password"></div>
+      <div class="v-field"><label for="p2">Uusi salasana uudelleen</label><input class="v-input" type="password" id="p2" autocomplete="new-password"></div>
+      <div class="errline" id="perr" role="alert"></div>
+      <button class="v-btn" type="submit" style="align-self:flex-start">Vaihda salasana</button>
+    </form>`;
+  document.getElementById("pf").onsubmit = async e => {
+    e.preventDefault();
+    const p1 = document.getElementById("p1").value, p2 = document.getElementById("p2").value, err = document.getElementById("perr");
+    err.textContent = "";
+    if (p1.length < 8) { err.textContent = "Salasanassa pitää olla vähintään 8 merkkiä."; return; }
+    if (p1 !== p2) { err.textContent = "Salasanat eivät täsmää."; return; }
+    const btn = e.target.querySelector("button"); btn.disabled = true; btn.textContent = "Vaihdetaan…";
+    const { error } = await sb.auth.updateUser({ password: p1 });
+    btn.disabled = false; btn.textContent = "Vaihda salasana";
+    if (error) {
+      err.textContent = /same|different/i.test(error.message) ? "Uusi salasana on sama kuin vanha." :
+        /weak|short|characters/i.test(error.message) ? "Salasana on liian heikko. Kokeile pidempää." :
+        /reauth|recent/i.test(error.message) ? "Kirjaudu ulos ja takaisin sisään, ja yritä sitten uudelleen." :
+        "Vaihto epäonnistui: " + error.message;
+      return;
+    }
+    e.target.reset();
+    toast("Salasana vaihdettu");
+  };
 }
 
 sb.auth.onAuthStateChange(ev => { if (ev === "SIGNED_OUT") loginView(); });
