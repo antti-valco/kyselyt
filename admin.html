@@ -4,80 +4,80 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Kyselyt – hallinta</title>
+<meta name="theme-color" content="#15233E">
+<title>Valco · Kyselyjen hallinta</title>
+<link rel="stylesheet" href="valco.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root { --bg:#f6f5f2; --card:#fff; --ink:#1c1c1c; --muted:#6b6b6b; --line:#e3e1dc; --soft:#efede8; --accent:#1c1c1c; --ok:#1f7a44; --err:#b3261e; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--ink); line-height:1.45; font-size:15px; }
-  header { background:var(--card); border-bottom:1px solid var(--line); }
-  .bar { max-width:1000px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:16px; }
-  .bar h1 { font-size:1.05rem; margin:0; flex:1; }
-  .bar h1 a { color:inherit; text-decoration:none; }
-  .who { color:var(--muted); font-size:.9rem; }
-  main { max-width:1000px; margin:0 auto; padding:28px 20px 80px; }
-  h2 { font-size:1.5rem; margin:0 0 4px; }
-  .sub { color:var(--muted); margin:0 0 22px; }
-  .row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-  .spacer { flex:1; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:12px; }
-  button, .btn { font:inherit; border-radius:8px; padding:8px 14px; cursor:pointer; border:1px solid var(--line); background:var(--card); color:var(--ink); text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
-  button:hover, .btn:hover { background:var(--soft); }
-  .primary { background:var(--accent); color:#fff; border-color:var(--accent); }
-  .primary:hover { background:#000; }
-  .danger { color:var(--err); }
-  .small { padding:5px 10px; font-size:.85rem; }
-  button:disabled { opacity:.5; cursor:default; }
-  label.f { display:block; font-weight:600; font-size:.88rem; margin:14px 0 6px; }
-  input[type=text], input[type=email], input[type=password], input[type=number], textarea, select { width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:8px; font:inherit; background:#fff; }
-  textarea { min-height:70px; resize:vertical; }
-  .hint { color:var(--muted); font-size:.82rem; margin-top:4px; }
-  .badge { font-size:.75rem; padding:2px 8px; border-radius:99px; background:var(--soft); color:var(--muted); font-weight:600; }
-  .badge.open { background:#e3f2e8; color:var(--ok); }
-  .formrow { display:flex; align-items:center; gap:14px; }
-  .formrow .t { flex:1; min-width:0; }
-  .formrow .t b { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .formrow .t span { color:var(--muted); font-size:.85rem; }
-  .count { text-align:right; min-width:70px; }
-  .count b { font-size:1.2rem; display:block; }
-  .count span { color:var(--muted); font-size:.75rem; }
-  .q { border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:10px; background:#fcfcfb; }
-  .q .grid { display:grid; grid-template-columns: 1fr 180px; gap:10px; }
-  .q .grid4 { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-top:10px; }
-  .q .tools { display:flex; gap:6px; align-items:center; margin-top:10px; }
-  .num { color:var(--muted); font-weight:700; font-size:.8rem; margin-bottom:6px; }
-  .empty { text-align:center; color:var(--muted); padding:40px 0; }
-  .login { max-width:380px; margin:10vh auto; }
-  .err { color:var(--err); font-size:.9rem; margin-top:10px; }
-  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:10px 16px; border-radius:8px; font-size:.9rem; opacity:0; transition:opacity .2s; pointer-events:none; }
-  .toast.show { opacity:1; }
-  table { width:100%; border-collapse:collapse; font-size:.88rem; }
-  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
-  th { background:var(--soft); font-weight:600; position:sticky; top:0; }
-  .tablewrap { overflow:auto; max-height:70vh; border:1px solid var(--line); border-radius:10px; background:var(--card); }
-  .sum { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px; margin-bottom:20px; }
-  .sum .card h4 { margin:0 0 10px; font-size:.95rem; }
-  .barrow { display:grid; grid-template-columns: 1fr 40px; gap:8px; align-items:center; font-size:.85rem; margin:4px 0; }
-  .barrow .track { background:var(--soft); border-radius:4px; height:20px; position:relative; overflow:hidden; }
-  .barrow .fill { background:var(--accent); height:100%; }
-  .barrow .lbl { position:absolute; left:8px; top:1px; color:#fff; mix-blend-mode:difference; white-space:nowrap; }
-  .big { font-size:2rem; font-weight:700; }
-  .switch { display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; font-size:.9rem; }
-  .linkbox { display:flex; gap:8px; }
-  .linkbox input { font-family: ui-monospace, monospace; font-size:.85rem; }
-  @media (max-width: 640px) { .q .grid, .q .grid4 { grid-template-columns:1fr; } .formrow { flex-wrap:wrap; } }
+  .bar { position: sticky; top: 0; z-index: 100; backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2); background: rgba(21,35,62,0.55); border-bottom: 1px solid var(--line); }
+  .bar-in { max-width: 1080px; margin: 0 auto; padding: 14px var(--sp-page-x); display: flex; align-items: center; gap: 16px; }
+  .bar-in a.home { display: flex; align-items: center; gap: 14px; text-decoration: none; }
+  .bar-in .sep { width: 1px; height: 20px; background: var(--line); }
+  .who { color: var(--fg-3); font-size: 14px; }
+  .spacer { flex: 1; }
+  main { max-width: 1080px; margin: 0 auto; padding: 40px var(--sp-page-x) 80px; }
+  .head { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; }
+  .head .t { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 260px; }
+  .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .stack { display: flex; flex-direction: column; gap: var(--sp-gap); }
+  .stats { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: var(--sp-gap); margin-bottom: 28px; }
+  .stats .v-card, .stats .v-card-highlight { display: flex; flex-direction: column; gap: 10px; justify-content: space-between; min-height: 150px; }
+  .stats .big { font-size: 56px; }
+  .formcard { display: grid; grid-template-columns: 1fr auto auto; gap: 20px; align-items: center; }
+  .formcard .meta { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin-top: 8px; color: var(--fg-3); font-size: 13px; }
+  .formcard .count { text-align: right; }
+  .formcard .count .v-num { font-size: 40px; display: block; }
+  .formcard .count span { color: var(--fg-3); font-size: 12px; }
+  .formcard .acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 330px; }
+  .login { max-width: 420px; margin: 8vh auto; display: flex; flex-direction: column; gap: 18px; }
+  .login .v-card { display: flex; flex-direction: column; gap: 14px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .sect { display: flex; flex-direction: column; gap: 14px; }
+  .sect + .sect { margin-top: var(--sp-gap); }
+  .sect-title { display: flex; align-items: baseline; gap: 10px; margin: 36px 0 14px; }
+  .q { display: flex; flex-direction: column; gap: 12px; }
+  .q .qtop { display: grid; grid-template-columns: 34px 1fr 200px; gap: 10px; align-items: center; }
+  .q .num { font: 600 12px/1 var(--font-sans); letter-spacing: .14em; color: var(--fg-3); }
+  .q .tools { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .toggle { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; color: var(--fg-2); }
+  .savebar { position: sticky; bottom: 16px; margin-top: 24px; display: flex; gap: 10px; align-items: center; padding: 12px 12px 12px 18px; border-radius: 18px; background: rgba(21,35,62,0.75); backdrop-filter: blur(18px); border: 1px solid var(--line); box-shadow: 0 20px 40px -20px rgba(0,0,0,.6); }
+  .sum { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--sp-gap); margin-bottom: 24px; }
+  .sum .v-card { display: flex; flex-direction: column; gap: 10px; }
+  .sum .avg { font-size: 52px; }
+  .brow { display: grid; grid-template-columns: minmax(0, 1fr) 36px; gap: 10px; align-items: end; font-size: 13px; }
+  .brow b { line-height: 22px; }
+  .brow .lbl { color: var(--fg-2); margin-bottom: 4px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .brow b { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .tablewrap { overflow: auto; max-height: 70vh; padding: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { position: sticky; top: 0; background: #1d2647; font-weight: 500; color: var(--fg-2); font-size: 13px; z-index: 1; }
+  tr:last-child td { border-bottom: 0; }
+  td.when { white-space: nowrap; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+  .empty { text-align: center; display: flex; flex-direction: column; gap: 8px; align-items: center; padding: 48px 24px; }
+  .errline { color: var(--err); font-size: 14px; }
+  @media (max-width: 800px) {
+    .stats { grid-template-columns: 1fr; }
+    .formcard { grid-template-columns: 1fr auto; }
+    .formcard .acts { grid-column: 1 / -1; justify-content: flex-start; max-width: none; }
+    .grid2, .grid4 { grid-template-columns: 1fr 1fr; }
+    .q .qtop { grid-template-columns: 1fr; }
+    .who { display: none; }
+  }
 </style>
 </head>
-<body>
-<header id="hdr" hidden>
-  <div class="bar">
-    <h1><a href="#/">Kyselyt · hallinta</a></h1>
+<body data-surface="ilta" data-colour="2" data-density="compact">
+<header class="bar" id="hdr" hidden>
+  <div class="bar-in">
+    <a class="home" href="#/"><span class="v-logo">valco</span><span class="sep"></span><span class="v-eyebrow">Kyselyt</span></a>
+    <span class="spacer"></span>
     <span class="who" id="who"></span>
-    <button class="small" id="logout">Kirjaudu ulos</button>
+    <button class="v-btn v-btn-ghost v-btn-sm" id="logout">Kirjaudu ulos</button>
   </div>
 </header>
-<main id="app"><p class="empty">Ladataan…</p></main>
-<div class="toast" id="toast"></div>
+<main id="app"><div class="v-skeleton" style="height:200px;margin-top:40px"></div></main>
+<div class="v-toast" id="toast"></div>
 
 <script>
 const SUPABASE_URL = "https://fqksurogezjvmlmsgpfw.supabase.co";
@@ -87,37 +87,39 @@ const PUBLIC_BASE = new URL("./", location.href).href;
 
 const app = document.getElementById("app");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-const toast = msg => { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2200); };
+const toast = msg => { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2400); };
 const fmtDate = d => new Date(d).toLocaleString("fi-FI", { day:"numeric", month:"numeric", year:"numeric", hour:"2-digit", minute:"2-digit" });
+const fmtNum = n => new Intl.NumberFormat("fi-FI", { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(n);
 const slugify = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 const publicLink = slug => `${PUBLIC_BASE}?f=${slug}`;
+const pad = n => String(n).padStart(2, "0");
 const TYPES = { text:"Lyhyt teksti", textarea:"Pitkä teksti", email:"Sähköposti", radio:"Yksi vaihtoehto", checkbox:"Monivalinta", scale:"Asteikko" };
+const loading = () => { app.innerHTML = `<div class="stack" style="margin-top:8px"><div class="v-skeleton" style="height:48px;width:40%"></div><div class="v-skeleton" style="height:150px"></div><div class="v-skeleton" style="height:96px"></div><div class="v-skeleton" style="height:96px"></div></div>`; };
 
-async function copy(text) { try { await navigator.clipboard.writeText(text); toast("Linkki kopioitu"); } catch { prompt("Kopioi linkki:", text); } }
+async function copy(text, msg = "Linkki kopioitu") { try { await navigator.clipboard.writeText(text); toast(msg); } catch { prompt("Kopioi:", text); } }
 
 // ---------- Kirjautuminen ----------
 function loginView(msg) {
   document.getElementById("hdr").hidden = true;
   app.innerHTML = `
-    <div class="login card">
-      <h2>Kirjaudu</h2>
-      <p class="sub">Kyselylomakkeiden hallinta</p>
-      <form id="lf">
-        <label class="f" for="em">Sähköposti</label>
-        <input type="email" id="em" autocomplete="username" required>
-        <label class="f" for="pw">Salasana</label>
-        <input type="password" id="pw" autocomplete="current-password" required>
-        <div style="margin-top:16px"><button class="primary" style="width:100%;justify-content:center">Kirjaudu sisään</button></div>
-        <div class="err" id="lerr">${esc(msg || "")}</div>
+    <div class="login v-rise">
+      <span class="v-logo" style="width:120px;height:32px">valco</span>
+      <span class="v-eyebrow v-eyebrow-dot">Kyselyt · hallinta</span>
+      <h2>Kirjaudu komentosillalle.</h2>
+      <p>Täältä ohjataan kyselyjä. Kuolemantähteä ohjataan toisesta huoneesta.</p>
+      <form id="lf" class="v-card" style="margin-top:6px">
+        <div class="v-field"><label for="em">Sähköposti</label><input class="v-input" type="email" id="em" autocomplete="username" required></div>
+        <div class="v-field"><label for="pw">Salasana</label><input class="v-input" type="password" id="pw" autocomplete="current-password" required></div>
+        ${msg ? `<div class="v-banner" role="alert">${esc(msg)}</div>` : ""}
+        <button class="v-btn v-btn-block" style="margin-top:4px">Kirjaudu sisään</button>
       </form>
     </div>`;
   document.getElementById("lf").onsubmit = async e => {
     e.preventDefault();
-    const btn = e.target.querySelector("button"); btn.disabled = true;
+    const btn = e.target.querySelector("button"); btn.disabled = true; btn.textContent = "Kirjaudutaan…";
     const { error } = await sb.auth.signInWithPassword({ email: em.value.trim(), password: pw.value });
-    btn.disabled = false;
-    if (error) document.getElementById("lerr").textContent = "Kirjautuminen epäonnistui. Tarkista sähköposti ja salasana.";
-    else route();
+    if (error) return loginView("Kirjautuminen epäonnistui. Tarkista sähköposti ja salasana.");
+    route();
   };
 }
 document.getElementById("logout").onclick = async () => { await sb.auth.signOut(); location.hash = "#/"; loginView(); };
@@ -136,6 +138,7 @@ async function requireAdmin() {
 async function route() {
   if (!(await requireAdmin())) return;
   const [, page, id] = (location.hash || "#/").slice(1).split("/");
+  scrollTo(0, 0);
   if (page === "edit") return editView(id);
   if (page === "responses") return responsesView(id);
   return listView();
@@ -144,24 +147,54 @@ window.addEventListener("hashchange", route);
 
 // ---------- Lomakelista ----------
 async function listView() {
-  app.innerHTML = `<p class="empty">Ladataan…</p>`;
+  loading();
   const { data, error } = await sb.from("forms").select("id,slug,title,is_open,password,created_at,responses(count)").order("created_at", { ascending: false });
-  if (error) { app.innerHTML = `<p class="err">Lataus epäonnistui: ${esc(error.message)}</p>`; return; }
+  if (error) { app.innerHTML = `<div class="v-banner" role="alert">Lomakkeiden lataus epäonnistui: ${esc(error.message)}</div>`; return; }
+  const total = data.reduce((s, f) => s + (f.responses?.[0]?.count ?? 0), 0);
+  const open = data.filter(f => f.is_open).length;
   app.innerHTML = `
-    <div class="row" style="margin-bottom:18px"><div><h2>Lomakkeet</h2><p class="sub" style="margin:0">${data.length} lomaketta</p></div><span class="spacer"></span><a class="btn primary" href="#/edit/new">+ Uusi lomake</a></div>
-    ${data.length ? data.map(f => {
+    <div class="head v-rise">
+      <div class="t">
+        <span class="v-eyebrow v-eyebrow-dot">Komentosilta</span>
+        <h1 class="v-two-tone">Lomakkeet <span>ja mitä niistä on sanottu.</span></h1>
+      </div>
+      <a class="v-btn" href="#/edit/new">Uusi lomake</a>
+    </div>
+    ${data.length ? `
+    <div class="stats">
+      <div class="v-card-highlight"><span class="v-eyebrow" style="color:rgba(255,255,255,.8)">Vastauksia yhteensä</span><span class="v-num big">${total}</span></div>
+      <div class="v-card"><span class="v-eyebrow">Auki nyt</span><span class="v-num big">${open}</span></div>
+      <div class="v-card"><span class="v-eyebrow">Lomakkeita</span><span class="v-num big">${data.length}</span></div>
+    </div>
+    <div class="stack">${data.map(f => {
       const n = f.responses?.[0]?.count ?? 0;
-      return `<div class="card formrow">
-        <div class="t"><b>${esc(f.title)}</b><span>${f.is_open ? '<span class="badge open">Auki</span>' : '<span class="badge">Suljettu</span>'}${f.password ? ` <span class="badge" title="Salasana: ${esc(f.password)}">🔒 ${esc(f.password)}</span>` : ""} · ?f=${esc(f.slug)} · luotu ${fmtDate(f.created_at)}</span></div>
-        <div class="count"><b>${n}</b><span>vastausta</span></div>
-        <div class="row">
-          <a class="btn small" href="#/responses/${f.id}">Vastaukset</a>
-          <a class="btn small" href="#/edit/${f.id}">Muokkaa</a>
-          <button class="small" data-copy="${esc(f.slug)}">Kopioi linkki</button>
-          <a class="btn small" href="${esc(publicLink(f.slug))}" target="_blank" rel="noopener">Avaa ↗</a>
-        </div></div>`;
-    }).join("") : `<div class="card empty">Ei vielä lomakkeita. Luo ensimmäinen painamalla <b>+ Uusi lomake</b>.</div>`}`;
-  app.querySelectorAll("[data-copy]").forEach(b => b.onclick = () => copy(publicLink(b.dataset.copy)));
+      return `<div class="v-card formcard">
+        <div style="min-width:0">
+          <h3>${esc(f.title)}</h3>
+          <div class="meta">
+            ${f.is_open ? '<span class="v-status v-status-success">Auki</span>' : '<span class="v-status">Suljettu</span>'}
+            ${f.password ? `<span class="v-tag" title="Lomakkeen salasana">Salasana: ${esc(f.password)}</span>` : ""}
+            <span>?f=${esc(f.slug)}</span><span>·</span><span>luotu ${fmtDate(f.created_at)}</span>
+          </div>
+        </div>
+        <div class="count"><span class="v-num">${n}</span><span>vastausta</span></div>
+        <div class="acts">
+          <a class="v-btn v-btn-sm" href="#/responses/${f.id}">Vastaukset</a>
+          <a class="v-btn v-btn-secondary v-btn-sm" href="#/edit/${f.id}">Muokkaa</a>
+          <button class="v-btn v-btn-secondary v-btn-sm" data-copy="${esc(f.slug)}" data-pw="${esc(f.password || "")}">Kopioi linkki</button>
+          <a class="v-btn v-btn-ghost v-btn-sm" href="${esc(publicLink(f.slug))}" target="_blank" rel="noopener">Avaa ↗</a>
+        </div>
+      </div>`;
+    }).join("")}</div>` : `
+    <div class="v-card-quiet empty">
+      <h3>Ei vielä yhtään lomaketta.</h3>
+      <p>Hiljaista kuin vastamelukuulokkeissa. Tehdään ensimmäinen.</p>
+      <a class="v-btn" href="#/edit/new" style="margin-top:10px">Uusi lomake</a>
+    </div>`}`;
+  app.querySelectorAll("[data-copy]").forEach(b => b.onclick = () => {
+    const link = publicLink(b.dataset.copy);
+    copy(b.dataset.pw ? `${link}\nSalasana: ${b.dataset.pw}` : link, b.dataset.pw ? "Linkki ja salasana kopioitu" : "Linkki kopioitu");
+  });
 }
 
 // ---------- Editori ----------
@@ -172,9 +205,9 @@ async function editView(id) {
   if (id === "new") {
     draft = { id: null, title: "", slug: "", description: "", thank_you: "Kiitos vastauksestasi!", is_open: true, password: "", questions: [newQuestion()], _slugTouched: false, _hasResponses: false };
   } else {
-    app.innerHTML = `<p class="empty">Ladataan…</p>`;
+    loading();
     const { data, error } = await sb.from("forms").select("*,responses(count)").eq("id", id).single();
-    if (error) { app.innerHTML = `<p class="err">Lomaketta ei löytynyt.</p>`; return; }
+    if (error) { app.innerHTML = `<div class="v-banner" role="alert">Lomaketta ei löytynyt.</div>`; return; }
     draft = { ...data, questions: structuredClone(data.questions || []), _slugTouched: true, _hasResponses: (data.responses?.[0]?.count ?? 0) > 0 };
     delete draft.responses;
   }
@@ -183,26 +216,26 @@ async function editView(id) {
 
 function qHtml(q, i, total) {
   const opts = q.type === "radio" || q.type === "checkbox";
-  return `<div class="q" data-i="${i}">
-    <div class="num">KYSYMYS ${i + 1}</div>
-    <div class="grid">
-      <input type="text" data-k="label" placeholder="Kysymys" value="${esc(q.label)}">
-      <select data-k="type">${Object.entries(TYPES).map(([k, v]) => `<option value="${k}" ${q.type === k ? "selected" : ""}>${v}</option>`).join("")}</select>
+  return `<div class="v-card q" data-i="${i}">
+    <div class="qtop">
+      <span class="num">${pad(i + 1)}</span>
+      <input class="v-input" type="text" data-k="label" placeholder="Kirjoita kysymys" value="${esc(q.label)}" aria-label="Kysymys ${i + 1}">
+      <select class="v-input" data-k="type" aria-label="Kysymyksen tyyppi">${Object.entries(TYPES).map(([k, v]) => `<option value="${k}" ${q.type === k ? "selected" : ""}>${v}</option>`).join("")}</select>
     </div>
-    ${opts ? `<label class="f">Vaihtoehdot (yksi per rivi)</label><textarea data-k="options" rows="4">${esc((q.options || []).join("\n"))}</textarea>` : ""}
+    ${opts ? `<div class="v-field"><label>Vaihtoehdot, yksi per rivi</label><textarea class="v-input" data-k="options" rows="4" style="min-height:100px">${esc((q.options || []).join("\n"))}</textarea></div>` : ""}
     ${q.type === "scale" ? `<div class="grid4">
-      <div><label class="f">Pienin</label><input type="number" data-k="min" value="${q.min ?? 1}"></div>
-      <div><label class="f">Suurin</label><input type="number" data-k="max" value="${q.max ?? 5}"></div>
-      <div><label class="f">Teksti alussa</label><input type="text" data-k="minLabel" value="${esc(q.minLabel || "")}" placeholder="esim. Huono"></div>
-      <div><label class="f">Teksti lopussa</label><input type="text" data-k="maxLabel" value="${esc(q.maxLabel || "")}" placeholder="esim. Erinomainen"></div>
+      <div class="v-field"><label>Pienin</label><input class="v-input" type="number" data-k="min" value="${q.min ?? 1}"></div>
+      <div class="v-field"><label>Suurin</label><input class="v-input" type="number" data-k="max" value="${q.max ?? 5}"></div>
+      <div class="v-field"><label>Teksti alussa</label><input class="v-input" type="text" data-k="minLabel" value="${esc(q.minLabel || "")}" placeholder="esim. Huono"></div>
+      <div class="v-field"><label>Teksti lopussa</label><input class="v-input" type="text" data-k="maxLabel" value="${esc(q.maxLabel || "")}" placeholder="esim. Erinomainen"></div>
     </div>` : ""}
     <div class="tools">
-      <label class="switch"><input type="checkbox" data-k="required" ${q.required ? "checked" : ""}> Pakollinen</label>
+      <label class="toggle"><input class="v-switch" type="checkbox" data-k="required" ${q.required ? "checked" : ""}> Pakollinen</label>
       <span class="spacer"></span>
-      <button type="button" class="small" data-act="up" ${i === 0 ? "disabled" : ""}>↑</button>
-      <button type="button" class="small" data-act="down" ${i === total - 1 ? "disabled" : ""}>↓</button>
-      <button type="button" class="small" data-act="dup">Monista</button>
-      <button type="button" class="small danger" data-act="del">Poista</button>
+      <button type="button" class="v-btn v-btn-ghost v-btn-sm" data-act="up" ${i === 0 ? "disabled" : ""} aria-label="Siirrä ylös">↑</button>
+      <button type="button" class="v-btn v-btn-ghost v-btn-sm" data-act="down" ${i === total - 1 ? "disabled" : ""} aria-label="Siirrä alas">↓</button>
+      <button type="button" class="v-btn v-btn-ghost v-btn-sm" data-act="dup">Monista</button>
+      <button type="button" class="v-btn v-btn-danger v-btn-sm" data-act="del">Poista</button>
     </div>
   </div>`;
 }
@@ -210,30 +243,39 @@ function qHtml(q, i, total) {
 function renderEditor() {
   const d = draft;
   app.innerHTML = `
-    <div class="row" style="margin-bottom:18px"><a class="btn small" href="#/">← Takaisin</a><span class="spacer"></span>
-      ${d.id ? `<button class="small danger" id="delForm">Poista lomake</button>` : ""}
-      <button class="primary" id="save">Tallenna</button></div>
-    <h2>${d.id ? "Muokkaa lomaketta" : "Uusi lomake"}</h2>
-    ${d._hasResponses ? `<p class="sub">Lomakkeella on jo vastauksia. Voit muokata tekstejä ja lisätä kysymyksiä vapaasti. Kysymyksen poistaminen piilottaa sen vanhat vastaukset näkymästä.</p>` : `<p class="sub">Täytä tiedot ja lisää kysymykset.</p>`}
-    <div class="card">
-      <label class="f" for="title">Otsikko</label>
-      <input type="text" id="title" value="${esc(d.title)}" placeholder="esim. Asiakastyytyväisyyskysely">
-      <label class="f" for="slug">Linkin tunniste</label>
-      <input type="text" id="slug" value="${esc(d.slug)}" placeholder="esim. asiakaspalaute">
-      <div class="hint">Linkki: <span id="slugPrev">${esc(publicLink(d.slug || "…"))}</span></div>
-      <label class="f" for="desc">Kuvaus (valinnainen)</label>
-      <textarea id="desc" placeholder="Näytetään otsikon alla">${esc(d.description || "")}</textarea>
-      <label class="f" for="ty">Kiitosteksti lähetyksen jälkeen</label>
-      <input type="text" id="ty" value="${esc(d.thank_you || "")}">
-      <label class="f" for="pwd">Salasana (valinnainen)</label>
-      <input type="text" id="pwd" value="${esc(d.password || "")}" placeholder="Jätä tyhjäksi, jos lomake on kaikille avoin" autocomplete="off" spellcheck="false">
-      <div class="hint">Jos salasana on asetettu, vastaajan pitää syöttää se ennen kuin kysymykset näkyvät. Isot ja pienet kirjaimet eivät haittaa.</div>
-      <div style="margin-top:16px"><label class="switch"><input type="checkbox" id="open" ${d.is_open ? "checked" : ""}> Lomake on auki vastauksille</label></div>
+    <div class="head">
+      <div class="t">
+        <a class="v-btn v-btn-ghost v-btn-sm" href="#/" style="align-self:flex-start;margin-left:-12px">← Lomakkeet</a>
+        <h1>${d.id ? esc(d.title || "Muokkaa lomaketta") : "Uusi lomake"}</h1>
+        ${d._hasResponses ? `<p>Lomakkeella on jo vastauksia. Tekstejä voi muokata ja kysymyksiä lisätä vapaasti. Poistetun kysymyksen vanhat vastaukset katoavat näkymästä.</p>` : ""}
+      </div>
     </div>
-    <h3 style="margin:26px 0 10px">Kysymykset</h3>
-    <div id="qs">${d.questions.map((q, i) => qHtml(q, i, d.questions.length)).join("")}</div>
-    <div class="row"><button id="addQ">+ Lisää kysymys</button><span class="spacer"></span><button class="primary" id="save2">Tallenna</button></div>
-    <div class="err" id="eerr"></div>`;
+
+    <div class="v-card sect">
+      <h3>Perustiedot</h3>
+      <div class="v-field"><label for="title">Otsikko</label><input class="v-input" type="text" id="title" value="${esc(d.title)}" placeholder="esim. Miten onnistuimme?"></div>
+      <div class="v-field"><label for="desc">Kuvaus</label><textarea class="v-input" id="desc" placeholder="Näkyy otsikon alla. Vapaaehtoinen.">${esc(d.description || "")}</textarea></div>
+      <div class="v-field"><label for="ty">Kiitosteksti</label><input class="v-input" type="text" id="ty" value="${esc(d.thank_you || "")}"><small>Näkyy isona otsikkona, kun vastaus on lähetetty.</small></div>
+    </div>
+    <div class="v-card sect">
+      <h3>Jakaminen</h3>
+      <div class="grid2">
+        <div class="v-field"><label for="slug">Linkin tunniste</label><input class="v-input" type="text" id="slug" value="${esc(d.slug)}" placeholder="esim. asiakaspalaute"><small id="slugPrev">${esc(publicLink(d.slug || "…"))}</small></div>
+        <div class="v-field"><label for="pwd">Salasana</label><input class="v-input" type="text" id="pwd" value="${esc(d.password || "")}" placeholder="Tyhjä = kaikille avoin" autocomplete="off" spellcheck="false"><small>Kirjainkoolla ei ole väliä.</small></div>
+      </div>
+      <label class="toggle" style="margin-top:4px"><input class="v-switch" type="checkbox" id="open" ${d.is_open ? "checked" : ""}> Lomake on auki vastauksille</label>
+    </div>
+
+    <div class="sect-title"><h2>Kysymykset</h2><span class="muted" id="qcount">${d.questions.length}</span></div>
+    <div class="stack" id="qs">${d.questions.map((q, i) => qHtml(q, i, d.questions.length)).join("")}</div>
+    <button class="v-btn v-btn-secondary v-btn-block" id="addQ" style="margin-top:var(--sp-gap)">Lisää kysymys</button>
+
+    <div class="savebar">
+      <span class="errline" id="eerr" role="alert"></span>
+      <span class="spacer"></span>
+      ${d.id ? `<button class="v-btn v-btn-danger v-btn-sm" id="delForm">Poista lomake</button>` : ""}
+      <button class="v-btn" id="save">Tallenna</button>
+    </div>`;
 
   const $ = id => document.getElementById(id);
   $("title").oninput = e => { d.title = e.target.value; if (!d._slugTouched) { d.slug = slugify(d.title); $("slug").value = d.slug; $("slugPrev").textContent = publicLink(d.slug || "…"); } };
@@ -243,8 +285,8 @@ function renderEditor() {
   $("ty").oninput = e => d.thank_you = e.target.value;
   $("pwd").oninput = e => d.password = e.target.value;
   $("open").onchange = e => d.is_open = e.target.checked;
-  $("addQ").onclick = () => { d.questions.push(newQuestion()); renderEditor(); document.querySelector(`.q[data-i="${d.questions.length - 1}"] input`)?.focus(); };
-  $("save").onclick = $("save2").onclick = saveForm;
+  $("addQ").onclick = () => { d.questions.push(newQuestion()); renderEditor(); const el = document.querySelector(`.q[data-i="${d.questions.length - 1}"] input`); el?.focus(); el?.scrollIntoView({ block: "center" }); };
+  $("save").onclick = saveForm;
   if ($("delForm")) $("delForm").onclick = deleteForm;
 
   $("qs").oninput = $("qs").onchange = e => {
@@ -262,8 +304,8 @@ function renderEditor() {
     } else q[k] = e.target.value;
   };
   $("qs").onclick = e => {
-    const act = e.target.dataset.act; if (!act) return;
-    const i = +e.target.closest(".q").dataset.i, qs = d.questions;
+    const btn = e.target.closest("[data-act]"); if (!btn) return;
+    const act = btn.dataset.act, i = +btn.closest(".q").dataset.i, qs = d.questions;
     if (act === "up") [qs[i - 1], qs[i]] = [qs[i], qs[i - 1]];
     if (act === "down") [qs[i + 1], qs[i]] = [qs[i], qs[i + 1]];
     if (act === "dup") qs.splice(i + 1, 0, { ...structuredClone(qs[i]), id: "" });
@@ -296,13 +338,13 @@ async function saveForm() {
     if (q.options && q.options.length < 2) problems.push(`Kysymyksessä ${i + 1} pitää olla vähintään kaksi vaihtoehtoa.`);
     if (q.type === "scale" && !(q.max > q.min && q.max - q.min <= 10)) problems.push(`Kysymyksen ${i + 1} asteikko on virheellinen (enintään 11 askelta).`);
   });
-  if (problems.length) { err.innerHTML = problems.map(esc).join("<br>"); err.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+  if (problems.length) { err.textContent = problems[0] + (problems.length > 1 ? ` (+${problems.length - 1} muuta)` : ""); return; }
 
   const row = { title: d.title.trim(), slug: d.slug, description: (d.description || "").trim() || null, thank_you: (d.thank_you || "").trim() || "Kiitos vastauksestasi!", is_open: d.is_open, password: (d.password || "").trim() || null, questions };
-  const btns = [...document.querySelectorAll("#save,#save2")]; btns.forEach(b => b.disabled = true);
+  const btn = document.getElementById("save"); btn.disabled = true; btn.textContent = "Tallennetaan…";
   const res = d.id ? await sb.from("forms").update(row).eq("id", d.id).select("id").single()
                    : await sb.from("forms").insert(row).select("id").single();
-  btns.forEach(b => b.disabled = false);
+  btn.disabled = false; btn.textContent = "Tallenna";
   if (res.error) { err.textContent = res.error.code === "23505" ? "Tämä linkin tunniste on jo käytössä. Valitse toinen." : "Tallennus epäonnistui: " + res.error.message; return; }
   toast("Tallennettu");
   location.hash = "#/";
@@ -319,19 +361,19 @@ async function deleteForm() {
 const fmtVal = v => Array.isArray(v) ? v.join(", ") : (v ?? "");
 
 async function responsesView(id) {
-  app.innerHTML = `<p class="empty">Ladataan…</p>`;
+  loading();
   const [{ data: form, error: e1 }, { data: rows, error: e2 }] = await Promise.all([
-    sb.from("forms").select("id,title,slug,questions,is_open").eq("id", id).single(),
+    sb.from("forms").select("id,title,slug,questions,is_open,password").eq("id", id).single(),
     sb.from("responses").select("id,created_at,answers").eq("form_id", id).order("created_at", { ascending: false }).limit(5000)
   ]);
-  if (e1 || e2) { app.innerHTML = `<p class="err">Lataus epäonnistui.</p>`; return; }
+  if (e1 || e2) { app.innerHTML = `<div class="v-banner" role="alert">Vastausten lataus epäonnistui.</div>`; return; }
   const qs = form.questions || [];
 
   const summary = qs.filter(q => ["scale", "radio", "checkbox"].includes(q.type)).map(q => {
     const vals = rows.map(r => r.answers?.[q.id]).filter(v => v !== undefined && v !== "" && !(Array.isArray(v) && !v.length));
     if (q.type === "scale") {
       const nums = vals.map(Number).filter(Number.isFinite);
-      const avg = nums.length ? (nums.reduce((a, b) => a + b, 0) / nums.length) : null;
+      const avg = nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null;
       const counts = []; for (let i = q.min ?? 1; i <= (q.max ?? 5); i++) counts.push([String(i), nums.filter(n => n === i).length]);
       return { q, avg, counts, n: nums.length };
     }
@@ -340,24 +382,42 @@ async function responsesView(id) {
   });
 
   app.innerHTML = `
-    <div class="row" style="margin-bottom:18px"><a class="btn small" href="#/">← Takaisin</a><span class="spacer"></span>
-      <button class="small" id="cp">Kopioi linkki</button>
-      <a class="btn small" href="#/edit/${form.id}">Muokkaa</a>
-      <button class="primary small" id="csv" ${rows.length ? "" : "disabled"}>Lataa CSV</button></div>
-    <h2>${esc(form.title)}</h2>
-    <p class="sub">${rows.length} vastausta · ${form.is_open ? "auki" : "suljettu"}</p>
+    <div class="head">
+      <div class="t">
+        <a class="v-btn v-btn-ghost v-btn-sm" href="#/" style="align-self:flex-start;margin-left:-12px">← Lomakkeet</a>
+        <h1>${esc(form.title)}</h1>
+        <div class="row">
+          ${form.is_open ? '<span class="v-status v-status-success">Auki</span>' : '<span class="v-status">Suljettu</span>'}
+          <span class="muted" style="font-size:14px">${rows.length} ${rows.length === 1 ? "vastaus" : "vastausta"}</span>
+        </div>
+      </div>
+      <div class="row">
+        <button class="v-btn v-btn-secondary v-btn-sm" id="cp">Kopioi linkki</button>
+        <a class="v-btn v-btn-secondary v-btn-sm" href="#/edit/${form.id}">Muokkaa</a>
+        <button class="v-btn v-btn-sm" id="csv" ${rows.length ? "" : "disabled"}>Lataa CSV</button>
+      </div>
+    </div>
     ${summary.length && rows.length ? `<div class="sum">${summary.map(s => {
       const max = Math.max(1, ...s.counts.map(c => c[1]));
-      return `<div class="card"><h4>${esc(s.q.label)}</h4>
-        ${s.avg != null ? `<div class="big">${s.avg.toFixed(1).replace(".", ",")}</div><div class="hint" style="margin-bottom:8px">keskiarvo · ${s.n} vastausta</div>` : `<div class="hint" style="margin-bottom:8px">${s.n} vastaajaa</div>`}
-        ${s.counts.map(([l, c]) => `<div class="barrow"><div class="track"><div class="fill" style="width:${(c / max) * 100}%"></div><span class="lbl">${esc(l)}</span></div><b>${c}</b></div>`).join("")}
+      const top = Math.max(...s.counts.map(c => c[1]));
+      return `<div class="v-card">
+        <span class="v-eyebrow">${esc(s.q.label)}</span>
+        ${s.avg != null ? `<div class="row" style="align-items:baseline;gap:10px"><span class="v-num avg">${fmtNum(s.avg)}</span><span class="muted" style="font-size:13px">keskiarvo · ${s.n} vastausta</span></div>` : `<span class="muted" style="font-size:13px">${s.n} vastaajaa</span>`}
+        <div class="stack" style="gap:8px">${s.counts.map(([l, c]) => `<div class="brow"><div><span class="lbl">${esc(l)}</span><div class="v-bar ${c === top && c > 0 ? "is-key" : ""}"><i style="width:${(c / max) * 100}%"></i></div></div><b>${c}</b></div>`).join("")}</div>
       </div>`; }).join("")}</div>` : ""}
-    ${rows.length ? `<div class="tablewrap"><table>
+    ${rows.length ? `<div class="v-card tablewrap"><table>
       <thead><tr><th>Aika</th>${qs.map(q => `<th>${esc(q.label)}</th>`).join("")}<th></th></tr></thead>
-      <tbody>${rows.map(r => `<tr><td style="white-space:nowrap">${fmtDate(r.created_at)}</td>${qs.map(q => `<td>${esc(fmtVal(r.answers?.[q.id]))}</td>`).join("")}<td><button class="small danger" data-del="${r.id}" title="Poista vastaus">✕</button></td></tr>`).join("")}</tbody>
-    </table></div>` : `<div class="card empty">Ei vielä vastauksia.</div>`}`;
+      <tbody>${rows.map(r => `<tr><td class="when">${fmtDate(r.created_at)}</td>${qs.map(q => `<td>${esc(fmtVal(r.answers?.[q.id]))}</td>`).join("")}<td><button class="v-btn v-btn-ghost v-btn-sm" data-del="${r.id}" aria-label="Poista vastaus" title="Poista vastaus">✕</button></td></tr>`).join("")}</tbody>
+    </table></div>` : `
+    <div class="v-card-quiet empty">
+      <h3>Ei vielä vastauksia.</h3>
+      <p>Lähetä linkki jollekulle, jolla on hetki aikaa. Tai kahvitauko.</p>
+      <button class="v-btn v-btn-secondary" id="cp2" style="margin-top:10px">Kopioi linkki</button>
+    </div>`}`;
 
-  document.getElementById("cp").onclick = () => copy(publicLink(form.slug));
+  const copyLink = () => copy(form.password ? `${publicLink(form.slug)}\nSalasana: ${form.password}` : publicLink(form.slug), form.password ? "Linkki ja salasana kopioitu" : "Linkki kopioitu");
+  document.getElementById("cp").onclick = copyLink;
+  if (document.getElementById("cp2")) document.getElementById("cp2").onclick = copyLink;
   const csvBtn = document.getElementById("csv");
   if (csvBtn) csvBtn.onclick = () => {
     const cell = v => `"${String(v).replace(/"/g, '""')}"`;
