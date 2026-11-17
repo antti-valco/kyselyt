@@ -145,14 +145,14 @@ window.addEventListener("hashchange", route);
 // ---------- Lomakelista ----------
 async function listView() {
   app.innerHTML = `<p class="empty">Ladataan…</p>`;
-  const { data, error } = await sb.from("forms").select("id,slug,title,is_open,created_at,responses(count)").order("created_at", { ascending: false });
+  const { data, error } = await sb.from("forms").select("id,slug,title,is_open,password,created_at,responses(count)").order("created_at", { ascending: false });
   if (error) { app.innerHTML = `<p class="err">Lataus epäonnistui: ${esc(error.message)}</p>`; return; }
   app.innerHTML = `
     <div class="row" style="margin-bottom:18px"><div><h2>Lomakkeet</h2><p class="sub" style="margin:0">${data.length} lomaketta</p></div><span class="spacer"></span><a class="btn primary" href="#/edit/new">+ Uusi lomake</a></div>
     ${data.length ? data.map(f => {
       const n = f.responses?.[0]?.count ?? 0;
       return `<div class="card formrow">
-        <div class="t"><b>${esc(f.title)}</b><span>${f.is_open ? '<span class="badge open">Auki</span>' : '<span class="badge">Suljettu</span>'} · ?f=${esc(f.slug)} · luotu ${fmtDate(f.created_at)}</span></div>
+        <div class="t"><b>${esc(f.title)}</b><span>${f.is_open ? '<span class="badge open">Auki</span>' : '<span class="badge">Suljettu</span>'}${f.password ? ` <span class="badge" title="Salasana: ${esc(f.password)}">🔒 ${esc(f.password)}</span>` : ""} · ?f=${esc(f.slug)} · luotu ${fmtDate(f.created_at)}</span></div>
         <div class="count"><b>${n}</b><span>vastausta</span></div>
         <div class="row">
           <a class="btn small" href="#/responses/${f.id}">Vastaukset</a>
@@ -170,7 +170,7 @@ function newQuestion(type = "text") { return { id: "", type, label: "", required
 
 async function editView(id) {
   if (id === "new") {
-    draft = { id: null, title: "", slug: "", description: "", thank_you: "Kiitos vastauksestasi!", is_open: true, questions: [newQuestion()], _slugTouched: false, _hasResponses: false };
+    draft = { id: null, title: "", slug: "", description: "", thank_you: "Kiitos vastauksestasi!", is_open: true, password: "", questions: [newQuestion()], _slugTouched: false, _hasResponses: false };
   } else {
     app.innerHTML = `<p class="empty">Ladataan…</p>`;
     const { data, error } = await sb.from("forms").select("*,responses(count)").eq("id", id).single();
@@ -225,6 +225,9 @@ function renderEditor() {
       <textarea id="desc" placeholder="Näytetään otsikon alla">${esc(d.description || "")}</textarea>
       <label class="f" for="ty">Kiitosteksti lähetyksen jälkeen</label>
       <input type="text" id="ty" value="${esc(d.thank_you || "")}">
+      <label class="f" for="pwd">Salasana (valinnainen)</label>
+      <input type="text" id="pwd" value="${esc(d.password || "")}" placeholder="Jätä tyhjäksi, jos lomake on kaikille avoin" autocomplete="off" spellcheck="false">
+      <div class="hint">Jos salasana on asetettu, vastaajan pitää syöttää se ennen kuin kysymykset näkyvät. Isot ja pienet kirjaimet eivät haittaa.</div>
       <div style="margin-top:16px"><label class="switch"><input type="checkbox" id="open" ${d.is_open ? "checked" : ""}> Lomake on auki vastauksille</label></div>
     </div>
     <h3 style="margin:26px 0 10px">Kysymykset</h3>
@@ -238,6 +241,7 @@ function renderEditor() {
   $("slug").onblur = e => { e.target.value = d.slug; };
   $("desc").oninput = e => d.description = e.target.value;
   $("ty").oninput = e => d.thank_you = e.target.value;
+  $("pwd").oninput = e => d.password = e.target.value;
   $("open").onchange = e => d.is_open = e.target.checked;
   $("addQ").onclick = () => { d.questions.push(newQuestion()); renderEditor(); document.querySelector(`.q[data-i="${d.questions.length - 1}"] input`)?.focus(); };
   $("save").onclick = $("save2").onclick = saveForm;
@@ -294,7 +298,7 @@ async function saveForm() {
   });
   if (problems.length) { err.innerHTML = problems.map(esc).join("<br>"); err.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
 
-  const row = { title: d.title.trim(), slug: d.slug, description: (d.description || "").trim() || null, thank_you: (d.thank_you || "").trim() || "Kiitos vastauksestasi!", is_open: d.is_open, questions };
+  const row = { title: d.title.trim(), slug: d.slug, description: (d.description || "").trim() || null, thank_you: (d.thank_you || "").trim() || "Kiitos vastauksestasi!", is_open: d.is_open, password: (d.password || "").trim() || null, questions };
   const btns = [...document.querySelectorAll("#save,#save2")]; btns.forEach(b => b.disabled = true);
   const res = d.id ? await sb.from("forms").update(row).eq("id", d.id).select("id").single()
                    : await sb.from("forms").insert(row).select("id").single();
