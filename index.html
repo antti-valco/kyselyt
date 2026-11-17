@@ -4,130 +4,182 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Kysely</title>
+<meta name="theme-color" content="#15233E">
+<title>Valco · Kysely</title>
+<link rel="stylesheet" href="valco.css">
 <style>
-  :root { --bg:#f6f5f2; --card:#fff; --ink:#1c1c1c; --muted:#6b6b6b; --line:#e3e1dc; --accent:#1c1c1c; --err:#b3261e; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--ink); line-height:1.5; }
-  main { max-width: 640px; margin: 0 auto; padding: 40px 20px 80px; }
-  h1 { font-size: 1.8rem; margin: 0 0 8px; letter-spacing: -0.01em; }
-  .desc { color: var(--muted); margin: 0 0 28px; white-space: pre-line; }
-  .q { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 14px; }
-  .q label.title { display:block; font-weight: 600; margin-bottom: 10px; }
-  .req { color: var(--err); margin-left: 2px; }
-  input[type=text], input[type=email], textarea { width:100%; padding: 10px 12px; border:1px solid var(--line); border-radius: 8px; font: inherit; background:#fff; }
-  textarea { min-height: 110px; resize: vertical; }
-  input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .opt { display:flex; align-items:center; gap:10px; padding:6px 0; cursor:pointer; }
-  .scale { display:flex; gap:8px; flex-wrap:wrap; }
-  .scale label { flex:1; min-width:44px; text-align:center; border:1px solid var(--line); border-radius:8px; padding:10px 0; cursor:pointer; user-select:none; }
-  .scale input { position:absolute; opacity:0; pointer-events:none; }
-  .scale input:checked + span { font-weight:700; }
-  .scale label:has(input:checked) { background: var(--accent); color:#fff; border-color: var(--accent); }
-  .scale-labels { display:flex; justify-content:space-between; color:var(--muted); font-size:.85rem; margin-top:6px; }
-  .hp { position:absolute; left:-9999px; }
-  button { background: var(--accent); color:#fff; border:0; border-radius: 10px; padding: 14px 22px; font: inherit; font-weight:600; cursor:pointer; width:100%; margin-top: 8px; }
-  button:disabled { opacity:.5; cursor: default; }
-  .error { color: var(--err); font-size:.9rem; margin-top:8px; }
-  .q.invalid { border-color: var(--err); }
-  .state { text-align:center; padding: 60px 0; color: var(--muted); }
-  .done h1 { margin-bottom: 12px; }
+  .top { max-width: 760px; margin: 0 auto; padding: 28px var(--sp-page-x) 0; display: flex; align-items: center; justify-content: space-between; }
+  main { max-width: 760px; margin: 0 auto; padding: 56px var(--sp-page-x) 40px; }
+  .hero { display: flex; flex-direction: column; gap: 18px; margin-bottom: 40px; }
+  .hero .desc { font-size: 18px; max-width: 58ch; white-space: pre-line; }
+  .qs { display: flex; flex-direction: column; gap: var(--sp-gap); }
+  .q { display: flex; flex-direction: column; gap: 14px; transition: border-color 200ms var(--ease); }
+  .q .num { font: 600 12px/1 var(--font-sans); letter-spacing: .14em; color: var(--fg-3); }
+  .q .req { color: var(--accent); margin-left: 3px; }
+  .q .opts { display: flex; flex-direction: column; gap: 2px; margin: 0 -14px; }
+  .q.invalid { border-color: rgba(255,159,174,0.7); }
+  .q .error { color: var(--err); font-size: 14px; }
+  .scale { display: grid; grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); gap: 8px; }
+  .scale label { position: relative; text-align: center; padding: 14px 0; border-radius: var(--radius-md); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); cursor: pointer; font-size: 17px; font-variant-numeric: tabular-nums; user-select: none; transition: background 120ms var(--ease), color 120ms var(--ease); }
+  .scale label:hover { background: rgba(255,255,255,0.12); }
+  .scale input { position: absolute; opacity: 0; pointer-events: none; }
+  .scale label:has(input:checked) { background: var(--fg-1); color: #171717; border-color: var(--fg-1); }
+  .scale label:has(input:focus-visible) { outline: 2px solid #fff; outline-offset: 2px; }
+  .scale-labels { display: flex; justify-content: space-between; gap: 12px; color: var(--fg-3); font-size: 13px; }
+  .send { margin-top: 28px; display: flex; flex-direction: column; gap: 12px; }
+  .send .note { font-size: 13px; color: var(--fg-3); text-align: center; }
+  .hp { position: absolute; left: -9999px; }
+  .center { max-width: 520px; margin: 4vh auto 0; display: flex; flex-direction: column; gap: 16px; }
+  .thanks { padding: 44px 36px; display: flex; flex-direction: column; gap: 18px; margin-top: 4vh; }
+  .thanks p { color: rgba(255,255,255,0.82); font-size: 18px; }
+  .thanks .v-btn { align-self: flex-start; margin-top: 8px; white-space: normal; text-align: left; line-height: 1.3; }
+  .skel { display: flex; flex-direction: column; gap: 14px; }
+  footer { max-width: 760px; margin: 0 auto; padding: 24px var(--sp-page-x) 48px; color: var(--fg-3); font-size: 13px; display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; border-top: 1px solid var(--line); }
+  footer a { text-decoration: none; color: var(--fg-2); }
+  footer a:hover { color: var(--fg-1); }
 </style>
 </head>
-<body>
-<main id="app"><p class="state">Ladataan…</p></main>
+<body data-surface="ilta" data-colour="2" data-density="comfortable">
+<header class="top">
+  <a class="v-logo" href="https://valco.fi" aria-label="Valco">valco</a>
+  <span class="v-eyebrow">Kysely</span>
+</header>
+<main id="app">
+  <div class="skel" aria-label="Ladataan">
+    <div class="v-skeleton" style="height:14px;width:120px"></div>
+    <div class="v-skeleton" style="height:56px;width:80%"></div>
+    <div class="v-skeleton" style="height:18px;width:60%;margin-bottom:24px"></div>
+    <div class="v-skeleton" style="height:130px"></div>
+    <div class="v-skeleton" style="height:130px"></div>
+  </div>
+</main>
+<footer>
+  <span>Parhaat kuulokkeet, joihin sinulla on varaa. Suunniteltu Kajaanissa.</span>
+  <a href="https://valco.fi">valco.fi →</a>
+</footer>
+<div class="v-toast" id="toast"></div>
 
 <script>
-// ====== ASETUKSET: täytä Supabasen Project URL ja publishable/anon-avain ======
+// ====== ASETUKSET ======
 const SUPABASE_URL = "https://fqksurogezjvmlmsgpfw.supabase.co";
 const SUPABASE_KEY = "sb_publishable_6mYs1PfkTrT_Izo0nn816g_LbPMcZEU";
-// ===========================================================================
+// =======================
 
 const app = document.getElementById("app");
 const slug = new URLSearchParams(location.search).get("f") || "";
 const headers = { apikey: SUPABASE_KEY, "Content-Type": "application/json" };
-
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-const show = html => { app.innerHTML = html; };
+const show = html => { app.innerHTML = html; scrollTo(0, 0); };
+const pad = n => String(n).padStart(2, "0");
 
 let password = null;
 const rpc = (fn, body) => fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, { method: "POST", headers, body: JSON.stringify(body) })
   .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
 
+function message(eyebrow, title, text) {
+  show(`<div class="center v-rise">
+    <span class="v-eyebrow v-eyebrow-dot">${esc(eyebrow)}</span>
+    <h2>${esc(title)}</h2>
+    <p>${esc(text)}</p>
+  </div>`);
+}
+
 async function load(pw) {
-  if (!/^[a-z0-9-]{2,60}$/.test(slug)) return show('<p class="state">Lomaketta ei löytynyt.</p>');
+  if (!/^[a-z0-9-]{2,60}$/.test(slug)) return message("Hups", "Tätä kyselyä ei löytynyt.", "Linkistä puuttuu pala. Tarkista linkki tai pyydä lähettäjältä uusi.");
   try {
     const form = await rpc("get_form", { p_slug: slug, p_password: pw ?? null });
-    if (!form) return show('<p class="state">Lomaketta ei löytynyt tai se on suljettu.</p>');
+    if (!form) return message("Hups", "Tätä kyselyä ei löytynyt.", "Kysely on suljettu tai linkissä on kirjoitusvirhe. Tarkista linkki tai pyydä lähettäjältä uusi.");
     if (form.locked) return renderLock(form);
     password = pw ?? null;
     render(form);
   } catch (e) {
-    show('<p class="state">Lomakkeen lataus epäonnistui. Yritä hetken kuluttua uudelleen.</p>');
+    message("Yhteysvirhe", "Kysely ei latautunut.", "Yhteys palvelimeen katkesi. Päivitä sivu hetken päästä.");
   }
 }
 
 function renderLock(form) {
-  document.title = form.title;
-  show(`
-    <h1>${esc(form.title)}</h1>
-    <p class="desc">Tämä kysely on suojattu salasanalla.</p>
-    <form id="lock" class="q" novalidate>
-      <label class="title" for="pw">Salasana</label>
-      <input type="text" id="pw" autocomplete="off" autocapitalize="off" spellcheck="false">
-      ${form.wrong ? '<div class="error">Väärä salasana. Yritä uudelleen.</div>' : ""}
-      <button type="submit">Jatka</button>
-    </form>`);
+  document.title = `${form.title} · Valco`;
+  show(`<div class="center v-rise">
+    <span class="v-eyebrow v-eyebrow-dot">Vain kutsuvieraille</span>
+    <h2>${esc(form.title)}</h2>
+    <p>Tämä kysely on suojattu salasanalla. Sen pitäisi löytyä samasta viestistä kuin tämä linkki.</p>
+    <form id="lock" class="v-card" novalidate style="display:flex;flex-direction:column;gap:14px;margin-top:8px">
+      <div class="v-field">
+        <label for="pw">Salasana</label>
+        <input class="v-input" type="text" id="pw" autocomplete="off" autocapitalize="off" spellcheck="false">
+      </div>
+      ${form.wrong ? '<div class="v-banner" role="alert">Väärä salasana. Tarkista kirjoitusasu ja yritä uudelleen.</div>' : ""}
+      <button class="v-btn v-btn-block" type="submit">Avaa kysely</button>
+    </form>
+  </div>`);
   const pw = document.getElementById("pw"); pw.focus();
   document.getElementById("lock").onsubmit = e => {
     e.preventDefault();
-    if (!pw.value.trim()) return;
+    if (!pw.value.trim()) return pw.focus();
     const b = e.target.querySelector("button"); b.disabled = true; b.textContent = "Tarkistetaan…";
     load(pw.value);
   };
 }
 
-function field(q) {
-  const req = q.required ? '<span class="req">*</span>' : "";
+function field(q, i) {
   const name = esc(q.id);
+  const req = q.required ? '<span class="req" aria-label="pakollinen">*</span>' : "";
   let input = "";
   switch (q.type) {
-    case "textarea": input = `<textarea name="${name}" id="${name}"></textarea>`; break;
-    case "email": input = `<input type="email" name="${name}" id="${name}" autocomplete="email">`; break;
+    case "textarea": input = `<textarea class="v-input" name="${name}" id="${name}" placeholder="Kirjoita tähän"></textarea>`; break;
+    case "email": input = `<input class="v-input" type="email" name="${name}" id="${name}" autocomplete="email" placeholder="nimi@esimerkki.fi">`; break;
     case "radio":
-    case "checkbox":
-      input = (q.options || []).map(o => `<label class="opt"><input type="${q.type}" name="${name}" value="${esc(o)}"> ${esc(o)}</label>`).join("");
+    case "checkbox": {
+      const cls = q.type === "radio" ? "v-radio" : "v-check";
+      input = `<div class="opts">${(q.options || []).map(o => `<label class="v-option"><input class="${cls}" type="${q.type}" name="${name}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join("")}</div>`;
       break;
+    }
     case "scale": {
       const min = q.min ?? 1, max = q.max ?? 5;
       let s = "";
-      for (let i = min; i <= max; i++) s += `<label><input type="radio" name="${name}" value="${i}"><span>${i}</span></label>`;
-      input = `<div class="scale">${s}</div>` + (q.minLabel || q.maxLabel ? `<div class="scale-labels"><span>${esc(q.minLabel)}</span><span>${esc(q.maxLabel)}</span></div>` : "");
+      for (let v = min; v <= max; v++) s += `<label><input type="radio" name="${name}" value="${v}">${v}</label>`;
+      input = `<div class="scale" style="--n:${max - min + 1}">${s}</div>` +
+        (q.minLabel || q.maxLabel ? `<div class="scale-labels"><span>${esc(q.minLabel)}</span><span>${esc(q.maxLabel)}</span></div>` : "");
       break;
     }
-    default: input = `<input type="text" name="${name}" id="${name}">`;
+    default: input = `<input class="v-input" type="text" name="${name}" id="${name}">`;
   }
-  return `<div class="q" data-id="${name}"><label class="title" for="${name}">${esc(q.label)}${req}</label>${input}<div class="error" hidden>Vastaa tähän kysymykseen.</div></div>`;
+  const labelFor = ["text", "textarea", "email"].includes(q.type) || !q.type ? ` for="${name}"` : "";
+  return `<div class="v-card q" data-id="${name}">
+    <span class="num">${pad(i + 1)}</span>
+    <label class="h3"${labelFor}>${esc(q.label)}${req}</label>
+    ${input}
+    <div class="error" hidden></div>
+  </div>`;
 }
 
 function render(form) {
-  document.title = form.title;
+  document.title = `${form.title} · Valco`;
+  const n = form.questions.length;
   show(`
-    <h1>${esc(form.title)}</h1>
-    ${form.description ? `<p class="desc">${esc(form.description)}</p>` : ""}
+    <section class="hero v-rise">
+      <span class="v-eyebrow v-eyebrow-dot">Kysely · ${n} ${n === 1 ? "kysymys" : "kysymystä"}</span>
+      <h1>${esc(form.title)}</h1>
+      ${form.description ? `<p class="desc">${esc(form.description)}</p>` : ""}
+    </section>
     <form id="f" novalidate>
-      ${form.questions.map(field).join("")}
+      <div class="qs">${form.questions.map(field).join("")}</div>
       <input class="hp" type="text" name="_website" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <button type="submit">Lähetä</button>
-      <div class="error" id="submitErr" hidden></div>
+      <div class="send">
+        <button class="v-btn v-btn-lg v-btn-block" type="submit">Lähetä vastaukset</button>
+        <div class="v-banner" id="submitErr" role="alert" hidden></div>
+        <p class="note">Vastaukset menevät suoraan meille Valcolle.</p>
+      </div>
     </form>`);
   const f = document.getElementById("f");
   const started = Date.now();
 
+  f.addEventListener("change", e => { const box = e.target.closest(".q"); if (box) { box.classList.remove("invalid"); box.querySelector(".error").hidden = true; } });
+
   f.addEventListener("submit", async ev => {
     ev.preventDefault();
     const fd = new FormData(f);
-    if (fd.get("_website") || Date.now() - started < 2000) return; // botit
+    if (fd.get("_website") || Date.now() - started < 2000) return;
     const answers = {};
     let firstBad = null;
     for (const q of form.questions) {
@@ -135,26 +187,32 @@ function render(form) {
       let v = q.type === "checkbox" ? fd.getAll(q.id) : (fd.get(q.id) ?? "");
       if (typeof v === "string") v = v.trim().slice(0, 5000);
       if (q.type === "scale" && v !== "") v = Number(v);
-      let bad = q.required && (v === "" || (Array.isArray(v) && !v.length));
-      if (!bad && q.type === "email" && v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) bad = true;
-      box.classList.toggle("invalid", bad);
-      box.querySelector(".error").hidden = !bad;
-      if (bad && !firstBad) firstBad = box;
+      let msg = "";
+      if (q.required && (v === "" || (Array.isArray(v) && !v.length))) msg = "Tähän tarvitaan vastaus.";
+      else if (q.type === "email" && v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) msg = "Tarkista sähköpostiosoite.";
+      box.classList.toggle("invalid", !!msg);
+      const er = box.querySelector(".error"); er.textContent = msg; er.hidden = !msg;
+      if (msg && !firstBad) firstBad = box;
       answers[q.id] = v;
     }
     if (firstBad) return firstBad.scrollIntoView({ behavior: "smooth", block: "center" });
 
-    const btn = f.querySelector("button"), err = document.getElementById("submitErr");
+    const btn = f.querySelector("button[type=submit]"), err = document.getElementById("submitErr");
     btn.disabled = true; btn.textContent = "Lähetetään…"; err.hidden = true;
     try {
       const result = await rpc("submit_response", { p_slug: slug, p_password: password, p_answers: answers });
       if (result === "wrong_password") return load(null);
       if (result !== "ok") throw new Error(result);
-      show(`<div class="done state"><h1 style="color:var(--ink)">${esc(form.thank_you || "Kiitos vastauksestasi!")}</h1><p>Vastauksesi on tallennettu.</p></div>`);
-      scrollTo(0, 0);
+      show(`<div class="v-card-highlight thanks v-rise">
+        <span class="v-eyebrow v-eyebrow-dot" style="color:rgba(255,255,255,0.8)">Vastaus perillä</span>
+        <h1>${esc(form.thank_you || "Kiitos vastauksestasi!")}</h1>
+        <p>Luemme jokaisen vastauksen. Osan jopa kahdesti, jos kahvia riittää.</p>
+        <a class="v-btn" href="https://valco.fi">Katso kuulokkeet, joilla tämä kaikki rahoitetaan</a>
+      </div>`);
     } catch (e) {
-      btn.disabled = false; btn.textContent = "Lähetä";
-      err.textContent = "Lähetys epäonnistui. Yritä uudelleen."; err.hidden = false;
+      btn.disabled = false; btn.textContent = "Lähetä vastaukset";
+      err.textContent = "Lähetys ei onnistunut. Vastauksesi ovat yhä lomakkeella. Tarkista verkkoyhteys ja yritä uudelleen.";
+      err.hidden = false;
     }
   });
 }
